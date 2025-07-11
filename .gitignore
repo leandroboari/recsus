@@ -2,3 +2,4 @@ downloads/*
 results/*
 dist
 build
+*.spec

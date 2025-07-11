@@ -473,7 +473,23 @@ def process_data(month_value, year_value, cnes_value, source_value):
 
 	df_agrupado['IVR'] = df_agrupado['PROC_REA'].apply(lambda proc: sigtap.get(proc, {}).get('ivr', ""))
 
-	df_agrupado = df_agrupado[['CNES', 'COD_TUNEP', 'PROC_REA', 'NOME', 'DATA', 'VAL_TOT', 'FREQ', 'SIGTAP', "SIGTAP_ORIGEM", "SIGTAP_ORIGEM_MEDIA", "TUNEP", "TUNEP_MEDIA", "DIF_TUNEP_SUS", "TUNEP_SUS_TOTAL", "DIF_TUNEP_SUS_MEDIA", "TUNEP_SUS_TOTAL_MEDIA", "DIF_TUNEP_SIGTAP", "VALOR_TOTAL_TUNEP", "DIF_TUNEP_SIGTAP_MEDIA", "VALOR_TOTAL", "VALOR_UNIT_IVR", "IVR", "BD_SUS"]]
+	df_agrupado['IVR_SIGTAP_MES'] = (
+		df_agrupado['FREQ'] *
+		df_agrupado['IVR']
+	)
+	df_agrupado['VALOR_UNIT_IVR'] = (
+		df_agrupado['VAL_TOT'] +
+		df_agrupado['VAL_TOT'] / 2
+	)
+	df_agrupado['METADE_SIGTAP_MES'] = (
+		df_agrupado['VAL_TOT'] / 2
+	)
+	df_agrupado['IVR_TABWIN_MES'] = (
+		df_agrupado['METADE_SIGTAP_MES'] *
+		df_agrupado['FREQ']
+	)
+
+	df_agrupado = df_agrupado[['CNES', 'COD_TUNEP', 'PROC_REA', 'NOME', 'DATA', 'VAL_TOT', 'FREQ', 'SIGTAP', "SIGTAP_ORIGEM", "SIGTAP_ORIGEM_MEDIA", "TUNEP", "TUNEP_MEDIA", "DIF_TUNEP_SUS", "TUNEP_SUS_TOTAL", "DIF_TUNEP_SUS_MEDIA", "TUNEP_SUS_TOTAL_MEDIA", "DIF_TUNEP_SIGTAP", "VALOR_TOTAL_TUNEP", "DIF_TUNEP_SIGTAP_MEDIA", "VALOR_TOTAL", "VALOR_UNIT_IVR", "IVR", "IVR_SIGTAP_MES", "VALOR_UNIT_IVR", "METADE_SIGTAP_MES", "IVR_TABWIN_MES", "BD_SUS"]]
 
 	df_agrupado['VAL_TOT'] = df_agrupado['VAL_TOT'].astype(float)
 	df_agrupado['SIGTAP'] = df_agrupado['SIGTAP'].astype(float)
@@ -487,7 +503,8 @@ def process_data(month_value, year_value, cnes_value, source_value):
 
 	valor_total_header_name = f"VALOR TOTAL - Dif. Méd TUNEP 2008 - SIGTAP {month_value}/{year_value}"
 
-	df_agrupado.columns = ['CNES', 'Código de origem da TUNEP', 'Código do Procedimento', 'Nome do Procedimento', 'Data/Mês de Referência', source_header_name, 'Frequência / Quantidade aprovada', sigtap_header_name, "Valor unitário SIGTAP-SUS 2008", "Média do valor unitário SIGTAP-SUS 2008", "Valor unitário TUNEP 2008", "Média do valor unitário TUNEP 2008", "Diferença da TUNEP - SIGTAP-SUS 2008", "Valor Total TUNEP (Dif. TUNEP 2008 - SIGTAP-SUS 2008)", "Diferença Média TUNEP 2008 - Média SIGTAP-SUS 2008", "Valor Total TUNEP (Dif. Méd. TUNEP 2008 - Média SIGTAP-SUS 2008)", dif_tunep_sigtap_header_name, "VR TOTAL TUNEP (Diferença TUNEP 2008 - SIGTAP-SUS no mês de referência)", dif_tunep_sigtap_media_header_name, valor_total_header_name, "Valor unitário que deveria ser pago aplicando o IVR = SITAP-SUS mês de referência + 50% do SIGTAP-SUS no mês de referência", "50% do SIGTAP-SUS no mês de referência = IVR", "BD SUS"]
+	df_agrupado.columns = ['CNES', 'Código de origem da TUNEP', 'Código do Procedimento', 'Nome do Procedimento', 'Data/Mês de Referência', source_header_name, 'Frequência / Quantidade aprovada', sigtap_header_name, "Valor unitário SIGTAP-SUS 2008", "Média do valor unitário SIGTAP-SUS 2008", "Valor unitário TUNEP 2008", "Média do valor unitário TUNEP 2008", "Diferença da TUNEP - SIGTAP-SUS 2008", "Valor Total TUNEP (Dif. TUNEP 2008 - SIGTAP-SUS 2008)", "Diferença Média TUNEP 2008 - Média SIGTAP-SUS 2008", "Valor Total TUNEP (Dif. Méd. TUNEP 2008 - Média SIGTAP-SUS 2008)", dif_tunep_sigtap_header_name, "VR TOTAL TUNEP (Diferença TUNEP 2008 - SIGTAP-SUS no mês de referência)", dif_tunep_sigtap_media_header_name, valor_total_header_name, "Valor unitário que deveria ser pago aplicando o IVR = SITAP-SUS mês de referência + 50% do SIGTAP-SUS no mês de referência", "50% do SIGTAP-SUS no mês de referência = IVR", "IVR com base no SIGTAP-SUS no mês de referência", "Valor unitário que deveria ser pago aplicando o IVR = Valor aprovado / realizado  no mês de referência do TABWIN  + 50% do Valor aprovado / realizado  no mês de referência do TABWIN", "50% do SIGTAP-SUS no mês de referência = IVR", "IVR com base no TABWIN no mês de referência",
+	"Fonte SUS"]
 	
 	add_log("Exportando dados para Planilha do Excel...")
 
@@ -548,7 +565,11 @@ def process_data(month_value, year_value, cnes_value, source_value):
 		worksheet.set_column('T:T', 20, moeda_format)
 		worksheet.set_column('U:U', 20, moeda_format)
 		worksheet.set_column('V:V', 20, moeda_format)
-		worksheet.set_column('W:W', 20, text_center_format)
+		worksheet.set_column('W:W', 20, moeda_format)
+		worksheet.set_column('X:X', 20, moeda_format)
+		worksheet.set_column('Y:Y', 20, moeda_format)
+		worksheet.set_column('Z:Z', 20, moeda_format)
+		worksheet.set_column('AA:AA', 20, text_center_format)
 
 		for col_num, value in enumerate(df_agrupado.columns.values):
 			worksheet.write(0, col_num, value, header_format)

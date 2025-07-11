@@ -439,6 +439,12 @@ def process_data(month_value, year_value, cnes_value, source_value):
 	df_agrupado['COD_TUNEP'] = df_agrupado['PROC_REA'].apply(lambda proc: sigtap.get(proc, {}).get('cod_tunep', "N/A"))
 	df_agrupado['TUNEP_MEDIA'] = df_agrupado['PROC_REA'].apply(lambda proc: sigtap.get(proc, {}).get('tunep_media', "N/A"))
 	df_agrupado['DIF_TUNEP_SUS'] = df_agrupado['PROC_REA'].apply(lambda proc: sigtap.get(proc, {}).get('dif_tunep_sus', "N/A"))
+
+	df_agrupado['TUNEP_SUS_TOTAL'] = (
+		df_agrupado['FREQ'] *
+		pd.to_numeric(df_agrupado['DIF_TUNEP_SUS'], errors='coerce')
+	)
+
 	df_agrupado['DIF_TUNEP_SUS_MEDIA'] = df_agrupado['PROC_REA'].apply(lambda proc: sigtap.get(proc, {}).get('dif_tunep_sus_media', "N/A"))
 
 	df_agrupado['DIF_TUNEP_SIGTAP'] = df_agrupado['PROC_REA'].apply(lambda proc: sigtap.get(proc, {}).get('dif_tunep_sigtap', "N/A"))
@@ -446,19 +452,20 @@ def process_data(month_value, year_value, cnes_value, source_value):
 
 	df_agrupado['IVR'] = df_agrupado['PROC_REA'].apply(lambda proc: sigtap.get(proc, {}).get('ivr', "N/A"))
 
-	df_agrupado = df_agrupado[['DATA', 'CNES', 'COD_TUNEP', 'PROC_REA', 'NOME', 'VAL_TOT', 'FREQ', 'SIGTAP', "SIGTAP_ORIGEM", "SIGTAP_ORIGEM_MEDIA", "TUNEP", "TUNEP_MEDIA", "DIF_TUNEP_SUS", "DIF_TUNEP_SUS_MEDIA", "DIF_TUNEP_SIGTAP", "DIF_TUNEP_SIGTAP_MEDIA", "IVR", "BD_SUS"]]
+	df_agrupado = df_agrupado[['CNES', 'COD_TUNEP', 'PROC_REA', 'NOME', 'DATA', 'VAL_TOT', 'FREQ', 'SIGTAP', "SIGTAP_ORIGEM", "SIGTAP_ORIGEM_MEDIA", "TUNEP", "TUNEP_MEDIA", "DIF_TUNEP_SUS", "TUNEP_SUS_TOTAL", "DIF_TUNEP_SUS_MEDIA", "DIF_TUNEP_SIGTAP", "DIF_TUNEP_SIGTAP_MEDIA", "IVR", "BD_SUS"]]
 
 	df_agrupado['VAL_TOT'] = df_agrupado['VAL_TOT'].astype(float)
 	df_agrupado['SIGTAP'] = df_agrupado['SIGTAP'].astype(float)
 	df_agrupado['FREQ'] = df_agrupado['FREQ'].astype(int)
 
-	source_header_name = f"TABWIN {month_value}/{year_value}"
-	sigtap_header_name = f"SIGTAP {month_value}/{year_value}"
+	source_header_name = f"Valor aprovado / realizado  no mês de referência do TABWIN{month_value}/{year_value}"
+	sigtap_header_name = f"Valor unitário SIGTAP-SUS {month_value}/{year_value} no mês de referência"
 
 	dif_tunep_sigtap_header_name = f"Dif. TUNEP 2008 e SIGTAP {month_value}/{year_value}"
 	dif_tunep_sigtap_media_header_name = f"Dif. Méd. TUNEP 2008 e SIGTAP {month_value}/{year_value}"
 
-	df_agrupado.columns = ['Data', 'CNES', 'Cód. Tunep', 'Cód. Procedimento', 'Nome do Procedimento', source_header_name, 'Frequência', sigtap_header_name, "SIGTAP 2008", "Méd. SIGTAP 2008", "TUNEP 2008", "Méd. TUNEP 2008", "Dif. TUNEP SUS 2008", "Dif. Méd. TUNEP SUS 2008", dif_tunep_sigtap_header_name, dif_tunep_sigtap_media_header_name, "IVR", "BD SUS"]
+
+	df_agrupado.columns = ['CNES', 'Código de origem da TUNEP', 'Código do Procedimento', 'Nome do Procedimento', 'Data/Mês de Referência', source_header_name, 'Frequência / Quantidade aprovada', sigtap_header_name, "Valor unitário SIGTAP-SUS 2008", "Média do valor unitário SIGTAP-SUS 2008", "Valor unitário TUNEP 2008", "Média do valor unitário TUNEP 2008", "Diferença da TUNEP - SIGTAP-SUS 2008", "Valor Total TUNEP (Dif. TUNEP 2008 - SIGTAP-SUS 2008)", "Dif. Méd. TUNEP SUS 2008", dif_tunep_sigtap_header_name, dif_tunep_sigtap_media_header_name, "IVR", "BD SUS"]
 	
 	add_log("Exportando dados para Planilha do Excel...")
 
@@ -498,23 +505,24 @@ def process_data(month_value, year_value, cnes_value, source_value):
 
 		# Configurar larguras e aplicar formatos
 		worksheet.set_column('A:A', 8, text_center_format)
-		worksheet.set_column('B:B', 8, text_center_format)
-		worksheet.set_column('C:C', 40, text_center_format)
-		worksheet.set_column('D:D', 13, text_center_format)
-		worksheet.set_column('E:E', 70, general_format)
-		worksheet.set_column('F:F', 14, moeda_format)
-		worksheet.set_column('G:G', 10, integer_format)
-		worksheet.set_column('H:H', 14, moeda_format)
-		worksheet.set_column('I:I', 11, moeda_format)
-		worksheet.set_column('J:J', 11, moeda_format)
-		worksheet.set_column('K:K', 11, moeda_format)
-		worksheet.set_column('L:L', 11, moeda_format)
-		worksheet.set_column('M:M', 11, moeda_format)
-		worksheet.set_column('N:N', 11, moeda_format)
-		worksheet.set_column('O:O', 11, moeda_format)
-		worksheet.set_column('P:P', 11, moeda_format)
-		worksheet.set_column('Q:Q', 11, moeda_format)
-		worksheet.set_column('R:R', 11, text_center_format)
+		worksheet.set_column('B:B', 40, text_center_format)
+		worksheet.set_column('C:C', 13, text_center_format)
+		worksheet.set_column('D:D', 70, general_format)
+		worksheet.set_column('E:E', 20, text_center_format)
+		worksheet.set_column('F:F', 20, moeda_format)
+		worksheet.set_column('G:G', 20, integer_format)
+		worksheet.set_column('H:H', 20, moeda_format)
+		worksheet.set_column('I:I', 20, moeda_format)
+		worksheet.set_column('J:J', 20, moeda_format)
+		worksheet.set_column('K:K', 20, moeda_format)
+		worksheet.set_column('L:L', 20, moeda_format)
+		worksheet.set_column('M:M', 20, moeda_format)
+		worksheet.set_column('N:N', 20, moeda_format)
+		worksheet.set_column('O:O', 20, moeda_format)
+		worksheet.set_column('P:P', 20, moeda_format)
+		worksheet.set_column('Q:Q', 20, moeda_format)
+		worksheet.set_column('R:R', 20, moeda_format)
+		worksheet.set_column('S:S', 20, text_center_format)
 
 		for col_num, value in enumerate(df_agrupado.columns.values):
 			worksheet.write(0, col_num, value, header_format)
@@ -565,18 +573,26 @@ current_month = datetime.now().strftime("%B").capitalize()
 combo_month.set(current_month)
 combo_year.set(str(datetime.now().year))
 
+# Selecionar UF
+label_uf = tk.Label(frame_selection, text="UF:")
+label_uf.grid(row=1, column=0, padx=5, pady=5)
+combo_uf = ttk.Combobox(frame_selection, values=["MG", "SP"], state="readonly")
+combo_uf.grid(row=1, column=1, padx=5, pady=5)
+combo_uf.set("MG")  # Definir SIH como padrão
+
 # Campo para CNES
 label_cnes = tk.Label(frame_selection, text="CNES:")
-label_cnes.grid(row=1, column=0, padx=5, pady=5)
+label_cnes.grid(row=1, column=2, padx=5, pady=5)
 entry_cnes = tk.Entry(frame_selection)
-entry_cnes.grid(row=1, column=1, padx=5, pady=5)
+entry_cnes.grid(row=1, column=3, padx=5, pady=5)
 entry_cnes.insert(0, "2111659")  # Definir CNES padrão
 
-# Selecionar SIH ou SIA
+
+# Selecionar source
 label_source = tk.Label(frame_selection, text="Fonte:")
-label_source.grid(row=1, column=2, padx=5, pady=5)
+label_source.grid(row=1, column=4, padx=5, pady=5)
 combo_source = ttk.Combobox(frame_selection, values=["SIH", "SIA"], state="readonly")
-combo_source.grid(row=1, column=3, padx=5, pady=5)
+combo_source.grid(row=1, column=5, padx=5, pady=5)
 combo_source.set("SIH")  # Definir SIH como padrão
 
 # Campo para Índice de Correção
